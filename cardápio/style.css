@@ -1,0 +1,20 @@
+body{
+    font-family: Arial, sans-serif;
+    padding:20px;
+}
+
+#produtos{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.card{
+    border:1px solid #ccc;
+    padding:10px;
+    width:220px;
+}
+
+.card img{
+    width:100%;
+}
