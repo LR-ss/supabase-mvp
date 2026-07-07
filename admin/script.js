@@ -2,100 +2,118 @@ import { supabase } from "../shared/supabase.js";
 
 let editandoId = null;
 
+const form = document.getElementById("form");
+const nome = document.getElementById("nome");
+const preco = document.getElementById("preco");
+const imagem = document.getElementById("imagem");
+const lista = document.getElementById("lista");
+
 async function carregarProdutos() {
 
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from("produtos")
         .select("*")
         .order("id");
 
-    const lista = document.getElementById("lista");
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
+    if (error) {
+        console.error(error);
+        alert(error.message);
+        return;
+    }
 
     lista.innerHTML = "";
 
     data.forEach(produto => {
 
         const div = document.createElement("div");
-
-        div.classList.add("item");
+        div.className = "item";
 
         div.innerHTML = `
-            <strong>${produto.nome}</strong>
-            <br>
-            R$ ${produto.preco}
-            <br><br>
+            <strong>${produto.nome}</strong><br>
+            R$ ${Number(produto.preco).toFixed(2)}<br><br>
 
-            <button class="editar">
-                Editar
-            </button>
-
-            <button class="excluir">
-                Excluir
-            </button>
+            <button class="editar">Editar</button>
+            <button class="excluir">Excluir</button>
         `;
 
-        div
-            .querySelector(".editar")
-            .onclick = () => editar(produto);
-
-        div
-            .querySelector(".excluir")
-            .onclick = () => excluir(produto.id);
+        div.querySelector(".editar").onclick = () => editar(produto);
+        div.querySelector(".excluir").onclick = () => excluir(produto.id);
 
         lista.appendChild(div);
+
     });
+
 }
 
-async function excluir(id){
+async function excluir(id) {
 
-    await supabase
+    const { error } = await supabase
         .from("produtos")
         .delete()
         .eq("id", id);
 
+    if (error) {
+        console.error(error);
+        alert(error.message);
+        return;
+    }
+
     carregarProdutos();
+
 }
 
-function editar(produto){
+function editar(produto) {
 
     editandoId = produto.id;
 
     nome.value = produto.nome;
     preco.value = produto.preco;
     imagem.value = produto.imagem || "";
+
 }
 
-document
-    .getElementById("form")
-    .addEventListener("submit", async e => {
+form.addEventListener("submit", async (e) => {
 
-        e.preventDefault();
+    e.preventDefault();
 
-        const produto = {
-            nome: nome.value,
-            preco: Number(preco.value),
-            imagem: imagem.value
-        };
+    const produto = {
+        nome: nome.value,
+        preco: Number(preco.value),
+        imagem: imagem.value
+    };
 
-        if(editandoId){
+    let error;
 
-            await supabase
-                .from("produtos")
-                .update(produto)
-                .eq("id", editandoId);
+    if (editandoId) {
 
-            editandoId = null;
+        ({ error } = await supabase
+            .from("produtos")
+            .update(produto)
+            .eq("id", editandoId));
 
-        }else{
+        editandoId = null;
 
-            await supabase
-                .from("produtos")
-                .insert(produto);
-        }
+    } else {
 
-        form.reset();
+        ({ error } = await supabase
+            .from("produtos")
+            .insert(produto));
 
-        carregarProdutos();
-    });
+    }
+
+    if (error) {
+        console.error(error);
+        alert(error.message);
+        return;
+    }
+
+    form.reset();
+
+    carregarProdutos();
+
+});
 
 carregarProdutos();
